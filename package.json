@@ -1,0 +1,46 @@
+{
+	"name": "pulsa",
+	"version": "0.1.0",
+	"description": "In-memory static file server",
+	"main": "dist/liven.cjs.js",
+	"module": "dist/liven.es.js",
+	"scripts": {
+		"build": "rollup --config rollup/cjs.js && rollup --config rollup/es.js",
+		"prepare": "npm run build",
+		"test": "jest --coverage --forceExit --runInBand"
+	},
+	"author": "Paulo Coghi",
+	"license": "MIT",
+	"jest": {
+		"coverageDirectory": "./coverage/",
+		"collectCoverage": true,
+		"collectCoverageFrom": [
+			"**/src/**",
+			"!**/dist/**",
+			"!**/node_modules/**",
+			"!**/rollup/**"
+		],
+		"verbose": true,
+		"testEnvironment": "node"
+	},
+	"devDependencies": {
+		"@polka/url": "^0.5.0",
+		"babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
+		"jest": "^24.8.0",
+		"mime": "^2.4.4",
+		"rollup": "^1.16.4",
+		"rollup-plugin-commonjs": "^10.0.1",
+		"rollup-plugin-node-resolve": "^5.2.0",
+		"rollup-plugin-terser": "^5.0.0"
+	},
+	"dependencies": {},
+	"babel": {
+		"env": {
+			"test": {
+				"plugins": [
+					"transform-es2015-modules-commonjs"
+				]
+			}
+		}
+	}
+}
