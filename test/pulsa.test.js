@@ -1,4 +1,5 @@
 import pulsa 		from './../src/index';
+import fs 			from 'fs';
 import http 		from 'http';
 import { resolve }	from 'path';
 
@@ -19,7 +20,7 @@ describe('Pulsa Server tests', () => {
 	beforeAll(() => {
 		http.createServer( pulsa.serve( { dir: './test/public_html' } ) ).listen( 9000 )
 		http.createServer( pulsa.serve( './test/public_html' ) ).listen( 9001 )
-		http.createServer( pulsa.serve( { dir: './test/public_spa', spa: true } ) ).listen( 9002 )
+		http.createServer( pulsa.serve( { dir: './test/public_spa', spa: true, base: '/spa' } ) ).listen( 9002 )
 		http.createServer( pulsa.serve( { dir: './test/public_max', maxFileSize: 5 } ) ).listen( 9003 )
 		http.createServer( function ( req, res ) { pulsa.serve( './test/public_html' )( req, res, next( res ) ) } ).listen( 9004 )
 
@@ -29,6 +30,10 @@ describe('Pulsa Server tests', () => {
 				'/components' : '/compiled'
 			}
 		})).listen( 9005 )
+
+		http.createServer( pulsa.serve( { dir: './test/public_changing', spa: true } ) ).listen( 9006 )
+		http.createServer( pulsa.serve( { dir: './test/public_spa_memory', spa: true } ) ).listen( 9007 )
+		http.createServer( pulsa.serve( { dir: './test/public_memory', spa: false } ) ).listen( 9008 )
 
 		return;
 	});
@@ -133,11 +138,12 @@ describe('Pulsa Server tests', () => {
 
 		}
 
-		request( '/', 'Hello SPA!' )
-		request( '/without_index', 'Hello SPA!' )
-		request( '/non_existent_dir', 'Hello SPA!' )
-		request( '/non_existent_file.txt', 'Hello SPA!' )
-		request( '/with_index', 'Hello index inside a SPA!', true )
+		request( '/spa/', 'Hello SPA!' )
+		request( '/spa/without_index', 'Hello SPA!' )
+		request( '/spa/non_existent_dir', 'Hello SPA!' )
+		request( '/spa/non_existent_file.txt', 'Hello SPA!' )
+		request( '/spa/with_index_as_folder', 'Hello SPA!' )
+		request( '/spa/with_index', 'Hello index inside a SPA!', true )
 
 	});
 
@@ -159,7 +165,6 @@ describe('Pulsa Server tests', () => {
 			response.on( 'end', () => {
 
 				expect( data ).toBe( 'Hello' );
-				done();
 
 			})
 
@@ -172,7 +177,7 @@ describe('Pulsa Server tests', () => {
 		http.get( 'http://127.0.0.1:9000', options, response => {
 
 			expect( response.statusCode ).toBe( 206 );
-			expect( response.headers[ 'content-range' ] ).toBe( 'bytes 6-12/12' );
+			expect( response.headers[ 'content-range' ] ).toBe( 'bytes 6-11/12' );
 
 			let data = '';
 
@@ -309,11 +314,258 @@ describe('Pulsa Server tests', () => {
 
 	});
 
-	test('12. Clearing caches', done => {
+	test('12. Serving memory generated files', async done => {
+
+		const request = ( path = '', expected, end = false ) => {
+
+			return new Promise ( promise_resolve => {
+
+				http.get( 'http://127.0.0.1:9000' + path, response => {
+
+					expect( response.statusCode ).toBe( 200 );
+
+					let data = '';
+
+					response.on( 'data', chunk => { data += chunk } )
+
+					response.on( 'end', () => {
+
+						expect( data ).toBe( expected );
+
+						promise_resolve();
+						
+						if ( end ) done();
+
+					})
+
+				})
+
+			})
+
+		}
+
+		pulsa.memory( './test/public_html/memory_buffer.txt', Buffer.from( 'This buffer only exists in memory!' ) )
+		pulsa.memory( './test/public_html/memory_file.txt', 'This file only exists in memory!' )
+
+		await request( '/memory_buffer.txt', 'This buffer only exists in memory!' )
+		await request( '/memory_file.txt', 'This file only exists in memory!' )
+
+		pulsa.memory( './test/public_html/memory_file.txt', 'And we can update it!' )
+		request( '/memory_file.txt', 'And we can update it!', true )
+
+	});
+
+	test('13. Ensuring that "clear" really clears the cache', async done => {
+
+		const request = ( path = '', expected, end = false ) => {
+
+			return new Promise ( promise_resolve => {
+
+				http.get( 'http://127.0.0.1:9006' + path, response => {
+
+					expect( response.statusCode ).toBe( 200 );
+
+					let data = '';
+
+					response.on( 'data', chunk => { data += chunk } )
+
+					response.on( 'end', () => {
+
+						expect( data ).toBe( expected );
+
+						promise_resolve();
+						
+						if ( end ) done();
+
+					})
+
+				})
+
+			})
+
+		}
+
+		// If this test failed previously, lets guarantee that
+		// everything is correct again before we begin
+		fs.writeFileSync( 'test/public_changing/index.html', 'Unchanged index.' );
+		fs.writeFileSync( 'test/public_changing/other.html', 'Unchanged other HTML file.' );
+
+		await request( '/', 'Unchanged index.' )
+		await request( '/other.html', 'Unchanged other HTML file.' )
+		await request( '/inexistent/route', 'Unchanged index.' )
+
+		fs.writeFileSync( 'test/public_changing/index.html', 'Changed index!' );
+		fs.writeFileSync( 'test/public_changing/other.html', 'Changed the other HTML file as well!' );
+
+		pulsa.clear( resolve( 'test/public_changing/index.html' ) )
+		pulsa.clear( resolve( 'test/public_changing/other.html' ) )
+
+		await request( '/', 'Changed index!' )
+		await request( '/other.html', 'Changed the other HTML file as well!' )
+		await request( '/inexistent/route', 'Changed index!' )
+
+		// Undo the changes
+		fs.writeFileSync( 'test/public_changing/index.html', 'Unchanged index.' );
+		fs.writeFileSync( 'test/public_changing/other.html', 'Unchanged other HTML file.' );
+
+		done();
+
+	});
+
+	test('14. SPA working with on-memory indexes!', async done => {
+
+		const request = ( path = '', expected, end = false ) => {
+
+			return new Promise ( promise_resolve => {
+
+				http.get( 'http://127.0.0.1:9007' + path, response => {
+
+					expect( response.statusCode ).toBe( 200 );
+
+					let data = '';
+
+					response.on( 'data', chunk => { data += chunk } )
+
+					response.on( 'end', () => {
+
+						expect( data ).toBe( expected );
+
+						promise_resolve();
+						
+						if ( end ) done();
+
+					})
+
+				})
+
+			})
+
+		}
+
+		// If this test failed previously, lets guarantee that
+		// everything is correct again before we begin
+		pulsa.memory( './test/public_spa_memory/index.html', 'This SPA is serverd from memory!' )
+
+		await request( '/', 'This SPA is serverd from memory!' )
+		await request( '/inexistent/route', 'This SPA is serverd from memory!' )
+
+		pulsa.memory( './test/public_spa_memory/index.html', 'This SPA is UPDATED from memory!' )
+
+		await request( '/', 'This SPA is UPDATED from memory!' )
+		request( '/inexistent/route', 'This SPA is UPDATED from memory!', true )
+
+	});
+
+	test('15. Memory files overwriting 404 files', async done => {
+
+		const request = ( path = '', expected, non_existent = false, end = false ) => {
+
+			return new Promise ( promise_resolve => {
+
+				http.get( 'http://127.0.0.1:9000' + path, response => {
+
+					expect( response.statusCode ).toBe( non_existent ? 404 : 200 );
+
+					if ( non_existent ) {
+
+						promise_resolve();
+
+						if ( end ) done();
+
+					} else {
+
+						let data = '';
+
+						response.on( 'data', chunk => { data += chunk } )
+
+						response.on( 'end', () => {
+
+							expect( data ).toBe( expected );
+
+							promise_resolve();
+							
+							if ( end ) done();
+
+						})
+
+					}
+
+				})
+
+			})
+
+		}
+
+		// If this test failed previously, lets guarantee that
+		// everything is correct again before we begin
+		await request( '/non_existen_to_be_overwrited.txt', null, true )
+
+		pulsa.memory( './test/public_html/non_existen_to_be_overwrited.txt', 'Now this non-existent file exists! No more 404s!' )
+
+		request( '/non_existen_to_be_overwrited.txt', 'Now this non-existent file exists! No more 404s!', false, true )
+
+	});
+
+	test('16. Memory files overwriting 404 index-files', async done => {
+
+		const request = ( path = '', expected, non_existent = false, end = false ) => {
+
+			return new Promise ( promise_resolve => {
+
+				http.get( 'http://127.0.0.1:9008' + path, response => {
+
+					expect( response.statusCode ).toBe( non_existent ? 404 : 200 );
+
+					if ( non_existent ) {
+
+						promise_resolve();
+
+						if ( end ) done();
+
+					} else {
+
+						let data = '';
+
+						response.on( 'data', chunk => { data += chunk } )
+
+						response.on( 'end', () => {
+
+							expect( data ).toBe( expected );
+
+							promise_resolve();
+							
+							if ( end ) done();
+
+						})
+
+					}
+
+				})
+
+			})
+
+		}
+
+		// If this test failed previously, lets guarantee that
+		// everything is correct again before we begin
+		await request( '/', null, true )
+		await request( '/dir', null, true )
+
+		pulsa.memory( './test/public_memory/index.html', 'Now this non-existent INDEX exists! No more 404s!' )
+		pulsa.memory( './test/public_memory/dir/index.html', 'Now this non-existent INDEX inside "dir" exists! No more 404s!' )
+
+		await request( '/', 'Now this non-existent INDEX exists! No more 404s!', false )
+		request( '/dir', 'Now this non-existent INDEX inside "dir" exists! No more 404s!', false, true )
+
+	});
+
+	test('Final: Clearing caches test', done => {
 
 		// With a path
 
 		pulsa.clear( resolve( './test/public_html/index.html' ) )
+		pulsa.clear( resolve( './test/public_spa/without_index/' ) + '/' )
+		pulsa.clear( resolve( './test/public_spa/spa/without_index/' ) )
 
 		// Without a path (ignored)
 		pulsa.clear()

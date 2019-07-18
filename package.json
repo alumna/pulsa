@@ -1,13 +1,13 @@
 {
-	"name": "pulsa",
-	"version": "0.1.0",
-	"description": "In-memory static file server",
+	"name": "@alumna/pulsa",
+	"version": "1.0.0",
+	"description": "In-memory static file server and middleware",
 	"main": "dist/liven.cjs.js",
 	"module": "dist/liven.es.js",
 	"scripts": {
 		"build": "rollup --config rollup/cjs.js && rollup --config rollup/es.js",
 		"prepare": "npm run build",
-		"test": "jest --coverage --forceExit --runInBand"
+		"test": "jest --coverage --forceExit"
 	},
 	"author": "Paulo Coghi",
 	"license": "MIT",
@@ -27,11 +27,12 @@
 		"@polka/url": "^0.5.0",
 		"babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
 		"jest": "^24.8.0",
+		"lodash": ">=4.17.13",
 		"mime": "^2.4.4",
-		"rollup": "^1.16.4",
+		"rollup": "^1.17.0",
 		"rollup-plugin-commonjs": "^10.0.1",
 		"rollup-plugin-node-resolve": "^5.2.0",
-		"rollup-plugin-terser": "^5.0.0"
+		"rollup-plugin-terser": "^5.1.1"
 	},
 	"dependencies": {},
 	"babel": {

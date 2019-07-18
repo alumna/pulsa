@@ -27,7 +27,8 @@
 ## Features
 
 * Production version with **no dependencies**
-* Extremely lightweight - 12kB!
+* Extremely lightweight - 13kB!
+* Works on any Express compatible framework, including [Polka](https://github.com/lukeed/polka)
 * 100% tested and working on Linux, Mac and Windows!
 
 Additionally, this module is delivered as:
@@ -56,12 +57,19 @@ http.createServer( pulsa({
 	dir: './public_html/',
 
 	// (OPTIONAL)
+	// Mask paths to a different directory when requested
+	alias: {
+		'/old': '/new'
+	},
+
+	// (OPTIONAL)
 	// Run as a SPA, mapping non-existent URL's to [base]index.html
 	// Default to "false"
 	spa: false,
 
 	// (OPTIONAL)
 	// Base directory to be considered running as a SPA
+	// Default to '/'
 	base: '/',
 
 	// (OPTIONAL)
@@ -72,10 +80,16 @@ http.createServer( pulsa({
 	
 });
 
-// Get the stats of all files already served by Pulsa
-pulsa.stats
+// Create a memory-file on the server
+// "content" can be a string or a buffer
+// -
+// It will be instantly available to all instances where the path matches
+// Works with SPA, index.html files served on dirs, updates 404 caches, etc
+pulsa.memory( fullpath, content )
 
 // Clear the cache of a file
 // MUST be a full path, not relative.
+// -
+// It will instantly reflect the operation on all instances
 pulsa.clear( '/var/www/index.html' )
 ```
