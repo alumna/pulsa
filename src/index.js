@@ -1,8 +1,8 @@
-import fs 				from 'fs';
-import mime				from 'mime/lite';
-import { resolve }		from 'path';
-import parser			from '@polka/url';
-import { Readable } 	from 'stream';
+import fs 						from 'fs';
+import mime						from 'mime/lite';
+import { join, resolve, sep }	from 'path';
+import parser					from '@polka/url';
+import { Readable } 			from 'stream';
 
 
 const caching 	= {};
@@ -28,20 +28,22 @@ const serve = function ( config ) {
 	run.responses 		= {}
 	run.base 			= alias( run.base, run )
 
-	cache( run.dir + run.base, run, run.base )
+	cache( run.base, run, run.base )
 
 	return async function ( req, res, next ) {
 	
 		const pathname = decodeURIComponent( req.path || req.pathname || parser( req ).pathname );
 
-		return ( run.responses[ pathname ] || ( run.responses[ pathname ] = await cache( run.dir + alias( pathname, run ), run, pathname ) ) )( req, res, next );
+		return ( run.responses[ pathname ] || ( run.responses[ pathname ] = await cache( pathname, run ) ) )( req, res, next );
 
 	}
 }
 
-const cache = async function ( path, run, pathname ) {
+const cache = async function ( pathname, run ) {
 
-	if ( path.endsWith( '/' ) ) path = path.slice( 0, -1 );
+	let path = join( run.dir, alias( pathname, run ) )
+
+	if ( path.endsWith( sep ) ) path = path.slice( 0, -1 );
 
 	if ( caching[ path ] ) return caching[ path ];
 
@@ -53,7 +55,7 @@ const cache = async function ( path, run, pathname ) {
 
 	if ( stop ) {
 		
-		let spa_path = run.dir + ( run.base.endsWith( '/' ) ? run.base.slice( 0, -1 ) : run.base )
+		let spa_path = join( run.dir, ( run.base.endsWith( '/' ) ? run.base.slice( 0, -1 ) : run.base ) )
 
 		if ( run.spa ) {
 			reverse( spa_path, run, pathname )
@@ -109,7 +111,7 @@ const memory = function ( path, buffer ) {
 	update_instances( path, reference.response )
 
 	// Directories behind the "index.html"
-	if ( path.endsWith( '/index.html' ) )
+	if ( path.endsWith( sep + 'index.html' ) )
 		clear( path.slice( 0, -11 ), false )
 
 	return true;
@@ -140,7 +142,7 @@ const check_index = function ( path ) {
 
 	let sufix = '';
 
-	if ( !check( path ) || ( map[ path ].stats.isDirectory() && ( !check( path + ( sufix = '/index.html' ) ) || map[ path + sufix ].stats.isDirectory() ) ) )
+	if ( !check( path ) || ( map[ path ].stats.isDirectory() && ( !check( path + ( sufix = sep + 'index.html' ) ) || map[ path + sufix ].stats.isDirectory() ) ) )
 		return { stop: true };
 
 	return { stop: false, sufix };
@@ -249,16 +251,16 @@ const clear = function ( path, recursive = true ) {
 
 	if ( !path ) return;
 
-	if ( path.length > 1 && path.endsWith( '/' ) ) path = path.slice( 0, -1 );
+	if ( path.length > 1 && path.endsWith( sep ) ) path = path.slice( 0, -1 );
 
 	if ( recursive ) {
 
-		if ( path.endsWith( '/index.html' ) ) {
+		if ( path.endsWith( sep + 'index.html' ) ) {
 
 			clear( path.slice( 0, -11 ), false )
 
 		} else if ( map[ path ] && map[ path ].stats && map[ path ].stats.isDirectory() )
-			clear( path + '/index.html', false )
+			clear( path + sep + 'index.html', false )
 
 	}
 
