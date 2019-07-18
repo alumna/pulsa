@@ -1,9 +1,9 @@
 {
 	"name": "@alumna/pulsa",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "In-memory static file server and middleware",
-	"main": "dist/liven.cjs.js",
-	"module": "dist/liven.es.js",
+	"main": "dist/pulsa.cjs.js",
+	"module": "dist/pulsa.es.js",
 	"scripts": {
 		"build": "rollup --config rollup/cjs.js && rollup --config rollup/es.js",
 		"prepare": "npm run build",

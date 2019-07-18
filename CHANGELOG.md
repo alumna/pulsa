@@ -1,5 +1,9 @@
 # Alumna changelog
 
+## 1.0.2 - 2019-07-18
+
+* Fix package.json entrypoint
+
 ## 1.0.1 - 2019-07-18
 
 * Reduce complexity of most part of the functions
