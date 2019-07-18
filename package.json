@@ -1,6 +1,6 @@
 {
 	"name": "@alumna/pulsa",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "In-memory static file server and middleware",
 	"main": "dist/liven.cjs.js",
 	"module": "dist/liven.es.js",
