@@ -1,10 +1,15 @@
-import fs 				from 'fs';
-import mime				from 'mime/lite';
-import { resolve }		from 'path';
-import parser			from '@polka/url';
-import { Readable } 	from 'stream';
+import fs 						from 'fs';
+import mime						from 'mime/lite';
+import { join, resolve, sep }	from 'path';
+import parser					from '@polka/url';
+import { Readable } 			from 'stream';
 
 
+// Shortcuts
+const readStream 	= fs.createReadStream
+const read 			= fs.readFileSync
+
+// Pulsa internal data
 const caching 	= {};
 const map 		= {}
 let   instances = 0;
@@ -28,54 +33,56 @@ const serve = function ( config ) {
 	run.responses 		= {}
 	run.base 			= alias( run.base, run )
 
-	cache( run.dir + run.base, run, run.base )
+	cache( run.base, run )
 
 	return async function ( req, res, next ) {
 	
 		const pathname = decodeURIComponent( req.path || req.pathname || parser( req ).pathname );
 
-		return ( run.responses[ pathname ] || ( run.responses[ pathname ] = await cache( run.dir + alias( pathname, run ), run, pathname ) ) )( req, res, next );
+		return ( run.responses[ pathname ] || ( run.responses[ pathname ] = await cache( pathname, run ) ) )( req, res, next );
 
 	}
 }
 
-const cache = async function ( path, run, pathname ) {
+const cache = async function ( pathname, run ) {
 
-	if ( path.endsWith( '/' ) ) path = path.slice( 0, -1 );
+	let path = join( run.dir, alias( pathname, run ) )
+
+	if ( path.endsWith( sep ) ) path = path.slice( 0, -1 );
 
 	if ( caching[ path ] ) return caching[ path ];
 
 	ensure( path )
 	reverse( path, run, pathname )
 
-	const reference 		= map[ path ];
+	const ref 				= map[ path ];
 	const { stop, sufix } 	= check_index( path );
 
 	if ( stop ) {
 		
-		let spa_path = run.dir + ( run.base.endsWith( '/' ) ? run.base.slice( 0, -1 ) : run.base )
+		let spa_path = join( run.dir, ( run.base.endsWith( '/' ) ? run.base.slice( 0, -1 ) : run.base ) )
 
 		if ( run.spa ) {
 			reverse( spa_path, run, pathname )
-			return reference.response = caching[ spa_path ];
+			return ref.response = caching[ spa_path ];
 		}
 		else
-			return reference.response = notFound;
+			return ref.response = notFound;
 	}
 	else reverse( path + sufix, run, pathname )
 
-	const sufix_reference = map[ path + sufix ];
+	const sufix_ref = map[ path + sufix ];
 
-	reference.stream = sufix_reference.stream = reference.stream || sufix_reference.stream || cache_stream( path + sufix, run, null, reference );
-	reference.response = sufix_reference.response = reference.response || sufix_reference.response || response( path, sufix, reference )
+	ref.stream = sufix_ref.stream = ref.stream || sufix_ref.stream || cache_stream( path + sufix, run, null, ref );
+	ref.response = sufix_ref.response = ref.response || sufix_ref.response || response( path, sufix, ref )
 
-	return caching[ path ] = caching[ path + sufix ] = reference.response;
+	return caching[ path ] = caching[ path + sufix ] = ref.response;
 
 }
 
 
 const ensure = path => {
-	if ( !map[ path ] ) map[ path ] = { reverses: {} }
+	if ( !map[ path ] ) map[ path ] = { reverses: {}, ranges: {} }
 }
 
 const reverse = ( path, run, pathname ) => {
@@ -93,23 +100,23 @@ const memory = function ( path, buffer ) {
 
 	if ( !( buffer instanceof Buffer ) ) buffer = Buffer.from( buffer )
 
-	const reference = map[ path ];
+	const ref = map[ path ];
 
-	reference.charset = 'utf-8'
+	ref.charset = 'utf-8'
 
-	reference.stats = {
+	ref.stats = {
 		size: 	buffer.length,
 		mtime: 	new Date(),
 		isDirectory: () => false
 	}
 
-	reference.stream = cache_stream( path, null, buffer, reference );
-	reference.response = caching[ path ] = response( path, '', reference );
+	ref.stream = cache_stream( path, null, buffer, ref );
+	ref.response = caching[ path ] = response( path, '', ref );
 
-	update_instances( path, reference.response )
+	update_instances( path, ref.response )
 
 	// Directories behind the "index.html"
-	if ( path.endsWith( '/index.html' ) )
+	if ( path.endsWith( sep + 'index.html' ) )
 		clear( path.slice( 0, -11 ), false )
 
 	return true;
@@ -120,15 +127,19 @@ const update_instances = function ( path, response, remove = false ) {
 
 	if ( !map[ path ] ) return;
 
-	const reference = map[ path ]
+	const ref = map[ path ]
 
-	for ( let id in reference.reverses ) {
-		for ( let pathname in reference.reverses[ id ] ) {
+	for ( let id in ref.reverses ) {
+		
+		const paths 	= ref.reverses[ id ]
+		const run 		= instance[ id ]
+
+		for ( let pathname in paths ) {
 			
 			if ( remove )
-				delete instance[ id ].responses[ pathname ]
+				delete run.responses[ pathname ]
 			else {
-				instance[ id ].responses[ pathname ] = response
+				run.responses[ pathname ] = response
 			}
 		}
 
@@ -140,7 +151,7 @@ const check_index = function ( path ) {
 
 	let sufix = '';
 
-	if ( !check( path ) || ( map[ path ].stats.isDirectory() && ( !check( path + ( sufix = '/index.html' ) ) || map[ path + sufix ].stats.isDirectory() ) ) )
+	if ( !check( path ) || ( map[ path ].stats.isDirectory() && ( !check( path + ( sufix = sep + 'index.html' ) ) || map[ path + sufix ].stats.isDirectory() ) ) )
 		return { stop: true };
 
 	return { stop: false, sufix };
@@ -164,17 +175,17 @@ const check = function ( path ) {
 
 }
 
-const cache_stream = function ( path, run, buffer, reference ) {
+const cache_stream = function ( path, run, buffer, ref ) {
 
-	if ( run && reference.stats.size > run.maxFileSize )
-		return reference.stream = ( res, opts ) => fs.createReadStream( path, opts ).pipe( res );
+	if ( run && ref.stats.size > run.maxFileSize )
+		return ref.stream = ( res, opts ) => readStream( path, opts ).pipe( res );
 
-	reference.data = buffer || fs.readFileSync( path );
+	ref.data = buffer || read( path );
 
-	return reference.stream = ( res, opts ) => {
+	return ref.stream = ( res, opts ) => {
 
 		const s = new Readable;
-		s.push( ( opts.start || opts.start === 0 && opts.end ) ? reference.data.slice( opts.start, opts.end + 1 ) : reference.data )
+		s.push( opts.end ? ref.data.slice( opts.start, opts.end + 1 ) : ref.data )
 		s.push( null )
 
 		s.pipe( res )
@@ -183,45 +194,65 @@ const cache_stream = function ( path, run, buffer, reference ) {
 
 }
 
-const response = function ( path, sufix, reference ) {
+const cache_range = function ( range, headers, ref ) {
 
-	const name 				= ( path + sufix ).split( '/' ).pop();
-	const sufix_reference 	= sufix ? map[ path + sufix ] : reference 
+	const opts = {}, size = ref.stats.size;
 
-	reference.headers = {
-		'Content-Length': sufix_reference.stats.size,
-		'Content-Type': mime.getType( name ) + ( reference.charset ? '; charset=' + reference.charset : '' ),
-		'Last-Modified': sufix_reference.stats.mtime.toUTCString(),
+	let [ x, y ] = range.replace( 'bytes=', '' ).split( '-' );
+	let end = opts.end = parseInt( y, 10 ) || ( size - 1 );
+	let start = opts.start = parseInt( x, 10 ) || 0;
+
+	if ( start >= size || end >= size ) {
+		
+		const content_range = `bytes */${size}`
+
+		return function ( res ) {
+
+			res.setHeader( 'Content-Range', content_range );
+			res.statusCode = 416;
+			return res.end();
+
+		}
+	}
+
+	const range_headers = {
+		'Content-Range': 	`bytes ${start}-${end}/${size}`,
+		'Content-Length': 	( end - start + 1 ),
+		'Accept-Ranges': 	'bytes',
+		'Content-Type': 	headers[ 'Content-Type' ],
+		'Last-Modified': 	headers[ 'Last-Modified' ]
+	}
+
+	return function ( res ) {
+
+		res.writeHead( 206, range_headers );
+		ref.stream( res, opts )
+
+	}
+
+}
+
+const response = function ( path, sufix, ref ) {
+
+	const sufix_ref = sufix ? map[ path + sufix ] : ref
+
+	ref.headers = {
+		'Content-Length': sufix_ref.stats.size,
+		'Content-Type': mime.getType( path ) + ( ref.charset ? '; charset=' + ref.charset : '' ),
+		'Last-Modified': sufix_ref.stats.mtime.toUTCString(),
 	};
 
-	return reference.response = sufix_reference.response = function ( req, res ) {
-
-		const opts = {};
+	return ref.response = sufix_ref.response = function ( req, res ) {
 
 		if ( req.headers.range ) {
+			const range = req.headers.range;
+			( ref.ranges[ range ] || ( ref.ranges[ range ] = cache_range( range, ref.headers, sufix_ref ) ) )( res )
 
-			let [ x, y ] = req.headers.range.replace( 'bytes=', '' ).split( '-' );
-			let end = opts.end = parseInt( y, 10 ) || ( sufix_reference.stats.size - 1 );
-			let start = opts.start = parseInt( x, 10 ) || 0;
-
-			if ( start >= sufix_reference.stats.size || end >= sufix_reference.stats.size ) {
-				res.setHeader( 'Content-Range', `bytes */${sufix_reference.stats.size}` );
-				res.statusCode = 416;
-				return res.end();
-			}
-
-			const temp_headers = Object.assign( {}, reference.headers )
-
-			temp_headers[ 'Content-Range' ]  = `bytes ${start}-${end}/${map[ path + sufix ].stats.size}`;
-			temp_headers[ 'Content-Length' ] = ( end - start + 1 );
-			temp_headers[ 'Accept-Ranges' ]  = 'bytes';
-
-			res.writeHead( 206, temp_headers );
 		}
-		else
-			res.writeHead( 200, reference.headers );
-
-		sufix_reference.stream( res, opts )
+		else {
+			res.writeHead( 200, ref.headers );
+			sufix_ref.stream( res, {} )
+		}
 
 	}
 
@@ -249,16 +280,16 @@ const clear = function ( path, recursive = true ) {
 
 	if ( !path ) return;
 
-	if ( path.length > 1 && path.endsWith( '/' ) ) path = path.slice( 0, -1 );
+	if ( path.length > 1 && path.endsWith( sep ) ) path = path.slice( 0, -1 );
 
 	if ( recursive ) {
 
-		if ( path.endsWith( '/index.html' ) ) {
+		if ( path.endsWith( sep + 'index.html' ) ) {
 
 			clear( path.slice( 0, -11 ), false )
 
 		} else if ( map[ path ] && map[ path ].stats && map[ path ].stats.isDirectory() )
-			clear( path + '/index.html', false )
+			clear( path + sep + 'index.html', false )
 
 	}
 
