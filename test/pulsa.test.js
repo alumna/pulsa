@@ -34,6 +34,7 @@ describe('Pulsa Server tests', () => {
 		http.createServer( pulsa.serve( { dir: './test/public_changing', spa: true } ) ).listen( 9006 )
 		http.createServer( pulsa.serve( { dir: './test/public_spa_memory', spa: true } ) ).listen( 9007 )
 		http.createServer( pulsa.serve( { dir: './test/public_memory', spa: false } ) ).listen( 9008 )
+		http.createServer( pulsa.serve( { dir: './test/public_overwriting', spa: false } ) ).listen( 9009 )
 
 		return;
 	});
@@ -442,8 +443,6 @@ describe('Pulsa Server tests', () => {
 
 		}
 
-		// If this test failed previously, lets guarantee that
-		// everything is correct again before we begin
 		pulsa.memory( './test/public_spa_memory/index.html', 'This SPA is serverd from memory!' )
 
 		await request( '/', 'This SPA is serverd from memory!' )
@@ -496,8 +495,6 @@ describe('Pulsa Server tests', () => {
 
 		}
 
-		// If this test failed previously, lets guarantee that
-		// everything is correct again before we begin
 		await request( '/non_existen_to_be_overwrited.txt', null, true )
 
 		pulsa.memory( './test/public_html/non_existen_to_be_overwrited.txt', 'Now this non-existent file exists! No more 404s!' )
@@ -546,8 +543,6 @@ describe('Pulsa Server tests', () => {
 
 		}
 
-		// If this test failed previously, lets guarantee that
-		// everything is correct again before we begin
 		await request( '/', null, true )
 		await request( '/dir', null, true )
 
@@ -556,6 +551,49 @@ describe('Pulsa Server tests', () => {
 
 		await request( '/', 'Now this non-existent INDEX exists! No more 404s!', false )
 		request( '/dir', 'Now this non-existent INDEX inside "dir" exists! No more 404s!', false, true )
+
+	});
+
+	test('17. Memory files overwriting existing files from disk', async done => {
+
+		const request = ( path = '', expected, end = false ) => {
+
+			return new Promise ( promise_resolve => {
+
+				http.get( 'http://127.0.0.1:9009' + path, response => {
+
+					expect( response.statusCode ).toBe( 200 );
+
+					let data = '';
+
+					response.on( 'data', chunk => { data += chunk } )
+
+					response.on( 'end', () => {
+
+						expect( data ).toBe( expected );
+
+						promise_resolve();
+						
+						if ( end ) done();
+
+					})
+
+				})
+
+			})
+
+		}
+
+		await request( '/', 'This content needs to be overwrited!' )
+		await request( '/other.html', 'This other content needs to be overwrited!' )
+
+		pulsa.memory( './test/public_overwriting/index.html', 'Index overwrited, even existing. Nicely done!' )
+		pulsa.memory( './test/public_overwriting/other.html', 'Other overwrited, even existing. Nicely done!' )
+
+		await request( '/', 'Index overwrited, even existing. Nicely done!' )
+		await request( '/other.html', 'Other overwrited, even existing. Nicely done!' )
+
+		done();
 
 	});
 
