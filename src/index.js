@@ -125,12 +125,16 @@ const update_instances = function ( path, response, remove = false ) {
 	const reference = map[ path ]
 
 	for ( let id in reference.reverses ) {
-		for ( let pathname in reference.reverses[ id ] ) {
+		
+		const paths 	= reference.reverses[ id ]
+		const run 		= instance[ id ]
+
+		for ( let pathname in paths ) {
 			
 			if ( remove )
-				delete instance[ id ].responses[ pathname ]
+				delete run.responses[ pathname ]
 			else {
-				instance[ id ].responses[ pathname ] = response
+				run.responses[ pathname ] = response
 			}
 		}
 
