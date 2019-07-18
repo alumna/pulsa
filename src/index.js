@@ -5,6 +5,11 @@ import parser					from '@polka/url';
 import { Readable } 			from 'stream';
 
 
+// Shortcuts
+const readStream 	= fs.createReadStream
+const read 			= fs.readFileSync
+
+// Pulsa internal data
 const caching 	= {};
 const map 		= {}
 let   instances = 0;
@@ -173,14 +178,14 @@ const check = function ( path ) {
 const cache_stream = function ( path, run, buffer, reference ) {
 
 	if ( run && reference.stats.size > run.maxFileSize )
-		return reference.stream = ( res, opts ) => fs.createReadStream( path, opts ).pipe( res );
+		return reference.stream = ( res, opts ) => readStream( path, opts ).pipe( res );
 
-	reference.data = buffer || fs.readFileSync( path );
+	reference.data = buffer || read( path );
 
 	return reference.stream = ( res, opts ) => {
 
 		const s = new Readable;
-		s.push( ( opts.start || opts.start === 0 && opts.end ) ? reference.data.slice( opts.start, opts.end + 1 ) : reference.data )
+		s.push( opts.end ? reference.data.slice( opts.start, opts.end + 1 ) : reference.data )
 		s.push( null )
 
 		s.pipe( res )
