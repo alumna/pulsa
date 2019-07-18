@@ -28,7 +28,7 @@ const serve = function ( config ) {
 	run.responses 		= {}
 	run.base 			= alias( run.base, run )
 
-	cache( run.base, run, run.base )
+	cache( run.base, run )
 
 	return async function ( req, res, next ) {
 	
