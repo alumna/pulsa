@@ -196,12 +196,11 @@ const cache_stream = function ( path, run, buffer, reference ) {
 
 const response = function ( path, sufix, reference ) {
 
-	const name 				= ( path + sufix ).split( '/' ).pop();
 	const sufix_reference 	= sufix ? map[ path + sufix ] : reference 
 
 	reference.headers = {
 		'Content-Length': sufix_reference.stats.size,
-		'Content-Type': mime.getType( name ) + ( reference.charset ? '; charset=' + reference.charset : '' ),
+		'Content-Type': mime.getType( path ) + ( reference.charset ? '; charset=' + reference.charset : '' ),
 		'Last-Modified': sufix_reference.stats.mtime.toUTCString(),
 	};
 
@@ -217,20 +216,18 @@ const response = function ( path, sufix, reference ) {
 
 			if ( start >= sufix_reference.stats.size || end >= sufix_reference.stats.size ) {
 				res.setHeader( 'Content-Range', `bytes */${sufix_reference.stats.size}` );
-				res.statusCode = 416;
-				return res.end();
+				res.statusCode = 416; return res.end();
 			}
 
-			const temp_headers = Object.assign( {}, reference.headers )
-
-			temp_headers[ 'Content-Range' ]  = `bytes ${start}-${end}/${map[ path + sufix ].stats.size}`;
-			temp_headers[ 'Content-Length' ] = ( end - start + 1 );
-			temp_headers[ 'Accept-Ranges' ]  = 'bytes';
-
-			res.writeHead( 206, temp_headers );
+			res.writeHead( 206, {
+				'Content-Range': 	`bytes ${start}-${end}/${map[ path + sufix ].stats.size}`,
+				'Content-Length': 	( end - start + 1 ),
+				'Accept-Ranges': 	'bytes',
+				'Content-Type': 	reference.headers[ 'Content-Type' ],
+				'Last-Modified': 	reference.headers[ 'Last-Modified' ]
+			});
 		}
-		else
-			res.writeHead( 200, reference.headers );
+		else res.writeHead( 200, reference.headers );
 
 		sufix_reference.stream( res, opts )
 
