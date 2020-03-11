@@ -15,70 +15,7 @@ const map 		= {}
 let   instances = 0;
 const instance 	= {};
 
-const serve = function ( config ) {
 
-	if ( typeof config === 'string' )
-		config = { dir: config }
-
-	const run = Object.assign({
-		base: 			'/',
-		dir: 			'.',
-		maxFileSize: 	1048576, // 1 MB
-		spa: 			false
-	}, config );
-
-	run.id 				= ++instances;
-	instance[ run.id ] 	= run;
-	run.dir 			= resolve( run.dir );
-	run.responses 		= {}
-	run.base 			= alias( run.base, run )
-
-	cache( run.base, run )
-
-	return async function ( req, res, next ) {
-	
-		const pathname = decodeURIComponent( req.path || req.pathname || parser( req ).pathname );
-
-		return ( run.responses[ pathname ] || ( run.responses[ pathname ] = await cache( pathname, run ) ) )( req, res, next );
-
-	}
-}
-
-const cache = async function ( pathname, run ) {
-
-	let path = join( run.dir, alias( pathname, run ) )
-
-	if ( path.endsWith( sep ) ) path = path.slice( 0, -1 );
-
-	if ( caching[ path ] ) return caching[ path ];
-
-	ensure( path )
-	reverse( path, run, pathname )
-
-	const ref 				= map[ path ];
-	const { stop, sufix } 	= check_index( path );
-
-	if ( stop ) {
-		
-		let spa_path = join( run.dir, ( run.base.endsWith( '/' ) ? run.base.slice( 0, -1 ) : run.base ) )
-
-		if ( run.spa ) {
-			reverse( spa_path, run, pathname )
-			return ref.response = caching[ spa_path ];
-		}
-		else
-			return ref.response = notFound;
-	}
-	else reverse( path + sufix, run, pathname )
-
-	const sufix_ref = map[ path + sufix ];
-
-	ref.stream = sufix_ref.stream = ref.stream || sufix_ref.stream || cache_stream( path + sufix, run, null, ref );
-	ref.response = sufix_ref.response = ref.response || sufix_ref.response || response( path, sufix, ref )
-
-	return caching[ path ] = caching[ path + sufix ] = ref.response;
-
-}
 
 
 const ensure = path => {
@@ -91,37 +28,7 @@ const reverse = ( path, run, pathname ) => {
 
 	map[ path ].reverses[ run.id ][ pathname ] = true
 
-}; 
-
-const memory = function ( path, buffer ) {
-
-	path = resolve( path )
-	ensure( path )
-
-	if ( !( buffer instanceof Buffer ) ) buffer = Buffer.from( buffer )
-
-	const ref = map[ path ];
-
-	ref.charset = 'utf-8'
-
-	ref.stats = {
-		size: 	buffer.length,
-		mtime: 	new Date(),
-		isDirectory: () => false
-	}
-
-	ref.stream = cache_stream( path, null, buffer, ref );
-	ref.response = caching[ path ] = response( path, '', ref );
-
-	update_instances( path, ref.response )
-
-	// Directories behind the "index.html"
-	if ( path.endsWith( sep + 'index.html' ) )
-		clear( path.slice( 0, -11 ), false )
-
-	return true;
-
-}
+};
 
 const update_instances = function ( path, response, remove = false ) {
 
@@ -300,6 +207,101 @@ const clear = function ( path, recursive = true ) {
 
 	return true;
 
+}
+
+const memory = function ( path, buffer ) {
+
+	path = resolve( path )
+	ensure( path )
+
+	if ( !( buffer instanceof Buffer ) ) buffer = Buffer.from( buffer )
+
+	const ref = map[ path ];
+
+	ref.charset = 'utf-8'
+
+	ref.stats = {
+		size: 	buffer.length,
+		mtime: 	new Date(),
+		isDirectory: () => false
+	}
+
+	ref.stream = cache_stream( path, null, buffer, ref );
+	ref.response = caching[ path ] = response( path, '', ref );
+
+	update_instances( path, ref.response )
+
+	// Directories behind the "index.html"
+	if ( path.endsWith( sep + 'index.html' ) )
+		clear( path.slice( 0, -11 ), false )
+
+	return true;
+
+}
+
+const cache = async function ( pathname, run ) {
+
+	let path = join( run.dir, alias( pathname, run ) )
+
+	if ( path.endsWith( sep ) ) path = path.slice( 0, -1 );
+
+	if ( caching[ path ] ) return caching[ path ];
+
+	ensure( path )
+	reverse( path, run, pathname )
+
+	const ref 				= map[ path ];
+	const { stop, sufix } 	= check_index( path );
+
+	if ( stop ) {
+		
+		let spa_path = join( run.dir, ( run.base.endsWith( '/' ) ? run.base.slice( 0, -1 ) : run.base ) )
+
+		if ( run.spa ) {
+			reverse( spa_path, run, pathname )
+			return ref.response = caching[ spa_path ];
+		}
+		else
+			return ref.response = notFound;
+	}
+	else reverse( path + sufix, run, pathname )
+
+	const sufix_ref = map[ path + sufix ];
+
+	ref.stream = sufix_ref.stream = ref.stream || sufix_ref.stream || cache_stream( path + sufix, run, null, ref );
+	ref.response = sufix_ref.response = ref.response || sufix_ref.response || response( path, sufix, ref )
+
+	return caching[ path ] = caching[ path + sufix ] = ref.response;
+
+}
+
+const serve = function ( config ) {
+
+	if ( typeof config === 'string' )
+		config = { dir: config }
+
+	const run = Object.assign({
+		base: 			'/',
+		dir: 			'.',
+		maxFileSize: 	1048576, // 1 MB
+		spa: 			false
+	}, config );
+
+	run.id 				= ++instances;
+	instance[ run.id ] 	= run;
+	run.dir 			= resolve( run.dir );
+	run.responses 		= {}
+	run.base 			= alias( run.base, run )
+
+	cache( run.base, run )
+
+	return async function ( req, res, next ) {
+	
+		const pathname = decodeURIComponent( req.path || req.pathname || parser( req ).pathname );
+
+		return ( run.responses[ pathname ] || ( run.responses[ pathname ] = await cache( pathname, run ) ) )( req, res, next );
+
+	}
 }
 
 export default { serve, memory, clear }
