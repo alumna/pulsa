@@ -6,12 +6,12 @@ import { Readable } 			from 'stream';
 
 
 // Shortcuts
-const readStream 	= fs.createReadStream
-const read 			= fs.readFileSync
+const readStream 	= fs.createReadStream;
+const read 			= fs.readFileSync;
 
 // Pulsa internal data
 const caching 	= {};
-const map 		= {}
+const map 		= {};
 let   instances = 0;
 const instance 	= {};
 
@@ -19,14 +19,14 @@ const instance 	= {};
 
 
 const ensure = path => {
-	if ( !map[ path ] ) map[ path ] = { reverses: {}, ranges: {} }
+	if ( !map[ path ] ) map[ path ] = { reverses: {}, ranges: {} };
 }
 
 const reverse = ( path, run, pathname ) => {
 
-	if ( !map[ path ].reverses[ run.id ] ) map[ path ].reverses[ run.id ] = {}
+	if ( !map[ path ].reverses[ run.id ] ) map[ path ].reverses[ run.id ] = {};
 
-	map[ path ].reverses[ run.id ][ pathname ] = true
+	map[ path ].reverses[ run.id ][ pathname ] = true;
 
 };
 
@@ -34,7 +34,7 @@ const update_instances = function ( path, response, remove = false ) {
 
 	if ( !map[ path ] ) return;
 
-	const ref = map[ path ]
+	const ref = map[ path ];
 
 	for ( let id in ref.reverses ) {
 		
@@ -241,35 +241,35 @@ const memory = function ( path, buffer ) {
 
 const cache = async function ( pathname, run ) {
 
-	let path = join( run.dir, alias( pathname, run ) )
+	let path = join( run.dir, alias( pathname, run ) );
 
 	if ( path.endsWith( sep ) ) path = path.slice( 0, -1 );
 
 	if ( caching[ path ] ) return caching[ path ];
 
-	ensure( path )
-	reverse( path, run, pathname )
+	ensure( path );
+	reverse( path, run, pathname );
 
 	const ref 				= map[ path ];
 	const { stop, sufix } 	= check_index( path );
 
 	if ( stop ) {
 		
-		let spa_path = join( run.dir, ( run.base.endsWith( '/' ) ? run.base.slice( 0, -1 ) : run.base ) )
+		let spa_path = join( run.dir, ( run.base.endsWith( '/' ) ? run.base.slice( 0, -1 ) : run.base ) );
 
 		if ( run.spa ) {
-			reverse( spa_path, run, pathname )
+			reverse( spa_path, run, pathname );
 			return ref.response = caching[ spa_path ];
 		}
 		else
 			return ref.response = notFound;
 	}
-	else reverse( path + sufix, run, pathname )
+	else reverse( path + sufix, run, pathname );
 
 	const sufix_ref = map[ path + sufix ];
 
 	ref.stream = sufix_ref.stream = ref.stream || sufix_ref.stream || cache_stream( path + sufix, run, null, ref );
-	ref.response = sufix_ref.response = ref.response || sufix_ref.response || response( path, sufix, ref )
+	ref.response = sufix_ref.response = ref.response || sufix_ref.response || response( path, sufix, ref );
 
 	return caching[ path ] = caching[ path + sufix ] = ref.response;
 
@@ -278,7 +278,7 @@ const cache = async function ( pathname, run ) {
 const serve = function ( config ) {
 
 	if ( typeof config === 'string' )
-		config = { dir: config }
+		config = { dir: config };
 
 	const run = Object.assign({
 		base: 			'/',
@@ -290,10 +290,10 @@ const serve = function ( config ) {
 	run.id 				= ++instances;
 	instance[ run.id ] 	= run;
 	run.dir 			= resolve( run.dir );
-	run.responses 		= {}
-	run.base 			= alias( run.base, run )
+	run.responses 		= {};
+	run.base 			= alias( run.base, run );
 
-	cache( run.base, run )
+	cache( run.base, run );
 
 	return async function ( req, res, next ) {
 	
