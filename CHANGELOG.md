@@ -1,5 +1,9 @@
 # Alumna changelog
 
+## 1.0.3 - 2020-03-11
+
+* Updated devDependencies
+
 ## 1.0.2 - 2019-07-18
 
 * Fix package.json entrypoint
