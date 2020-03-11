@@ -38,15 +38,15 @@ const update_instances = function ( path, response, remove = false ) {
 
 	for ( let id in ref.reverses ) {
 		
-		const paths 	= ref.reverses[ id ]
-		const run 		= instance[ id ]
+		const paths 	= ref.reverses[ id ];
+		const run 		= instance[ id ];
 
 		for ( let pathname in paths ) {
 			
 			if ( remove )
-				delete run.responses[ pathname ]
+				delete run.responses[ pathname ];
 			else {
-				run.responses[ pathname ] = response
+				run.responses[ pathname ] = response;
 			}
 		}
 
@@ -92,10 +92,10 @@ const cache_stream = function ( path, run, buffer, ref ) {
 	return ref.stream = ( res, opts ) => {
 
 		const s = new Readable;
-		s.push( opts.end ? ref.data.slice( opts.start, opts.end + 1 ) : ref.data )
-		s.push( null )
+		s.push( opts.end ? ref.data.slice( opts.start, opts.end + 1 ) : ref.data );
+		s.push( null );
 
-		s.pipe( res )
+		s.pipe( res );
 
 	}
 
@@ -111,7 +111,7 @@ const cache_range = function ( range, headers, ref ) {
 
 	if ( start >= size || end >= size ) {
 		
-		const content_range = `bytes */${size}`
+		const content_range = `bytes */${size}`;
 
 		return function ( res ) {
 
@@ -133,7 +133,7 @@ const cache_range = function ( range, headers, ref ) {
 	return function ( res ) {
 
 		res.writeHead( 206, range_headers );
-		ref.stream( res, opts )
+		ref.stream( res, opts );
 
 	}
 
@@ -141,7 +141,7 @@ const cache_range = function ( range, headers, ref ) {
 
 const response = function ( path, sufix, ref ) {
 
-	const sufix_ref = sufix ? map[ path + sufix ] : ref
+	const sufix_ref = sufix ? map[ path + sufix ] : ref;
 
 	ref.headers = {
 		'Content-Length': sufix_ref.stats.size,
