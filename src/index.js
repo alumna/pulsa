@@ -195,7 +195,7 @@ const clear = function ( path, recursive = true ) {
 
 			clear( path.slice( 0, -11 ), false );
 
-		} else if ( map[ path ] && map[ path ].stats && map[ path ].stats.isDirectory() );
+		} else if ( map[ path ] && map[ path ].stats && map[ path ].stats.isDirectory() )
 			clear( path + sep + 'index.html', false );
 
 	}
