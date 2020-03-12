@@ -153,12 +153,12 @@ const response = function ( path, sufix, ref ) {
 
 		if ( req.headers.range ) {
 			const range = req.headers.range;
-			( ref.ranges[ range ] || ( ref.ranges[ range ] = cache_range( range, ref.headers, sufix_ref ) ) )( res )
+			( ref.ranges[ range ] || ( ref.ranges[ range ] = cache_range( range, ref.headers, sufix_ref ) ) )( res );
 
 		}
 		else {
 			res.writeHead( 200, ref.headers );
-			sufix_ref.stream( res, {} )
+			sufix_ref.stream( res, {} );
 		}
 
 	}
