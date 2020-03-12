@@ -193,14 +193,14 @@ const clear = function ( path, recursive = true ) {
 
 		if ( path.endsWith( sep + 'index.html' ) ) {
 
-			clear( path.slice( 0, -11 ), false )
+			clear( path.slice( 0, -11 ), false );
 
-		} else if ( map[ path ] && map[ path ].stats && map[ path ].stats.isDirectory() )
-			clear( path + sep + 'index.html', false )
+		} else if ( map[ path ] && map[ path ].stats && map[ path ].stats.isDirectory() );
+			clear( path + sep + 'index.html', false );
 
 	}
 
-	update_instances( path, null, true )
+	update_instances( path, null, true );
 
 	delete map[ path ];
 	delete caching[ path ];
@@ -211,14 +211,14 @@ const clear = function ( path, recursive = true ) {
 
 const memory = function ( path, buffer ) {
 
-	path = resolve( path )
-	ensure( path )
+	path = resolve( path );
+	ensure( path );
 
-	if ( !( buffer instanceof Buffer ) ) buffer = Buffer.from( buffer )
+	if ( !( buffer instanceof Buffer ) ) buffer = Buffer.from( buffer );
 
 	const ref = map[ path ];
 
-	ref.charset = 'utf-8'
+	ref.charset = 'utf-8';
 
 	ref.stats = {
 		size: 	buffer.length,
@@ -229,11 +229,11 @@ const memory = function ( path, buffer ) {
 	ref.stream = cache_stream( path, null, buffer, ref );
 	ref.response = caching[ path ] = response( path, '', ref );
 
-	update_instances( path, ref.response )
+	update_instances( path, ref.response );
 
 	// Directories behind the "index.html"
 	if ( path.endsWith( sep + 'index.html' ) )
-		clear( path.slice( 0, -11 ), false )
+		clear( path.slice( 0, -11 ), false );
 
 	return true;
 
@@ -304,4 +304,4 @@ const serve = function ( config ) {
 	}
 }
 
-export default { serve, memory, clear }
+export default { serve, memory, clear };
