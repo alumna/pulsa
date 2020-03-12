@@ -1,5 +1,10 @@
 # Alumna changelog
 
+## 1.0.4 - 2020-03-12
+
+* Code quality fixes
+* Updated devDependencies (rollup)
+
 ## 1.0.3 - 2020-03-11
 
 * Updated devDependencies
