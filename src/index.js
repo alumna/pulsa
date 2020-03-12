@@ -56,7 +56,7 @@ const update_instances = function ( path, response, remove = false ) {
 
 const check = function ( path ) {
 
-	ensure( path )
+	ensure( path );
 
 	if ( map[ path ].stats )
 		return true;
