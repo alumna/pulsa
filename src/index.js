@@ -54,17 +54,6 @@ const update_instances = function ( path, response, remove = false ) {
 
 }
 
-const check_index = function ( path ) {
-
-	let sufix = '';
-
-	if ( !check( path ) || ( map[ path ].stats.isDirectory() && ( !check( path + ( sufix = sep + 'index.html' ) ) || map[ path + sufix ].stats.isDirectory() ) ) )
-		return { stop: true };
-
-	return { stop: false, sufix };
-
-}
-
 const check = function ( path ) {
 
 	ensure( path )
@@ -79,6 +68,17 @@ const check = function ( path ) {
 	catch ( e ) {
 		return false;
 	}
+
+}
+
+const check_index = function ( path ) {
+
+	let sufix = '';
+
+	if ( !check( path ) || ( map[ path ].stats.isDirectory() && ( !check( path + ( sufix = sep + 'index.html' ) ) || map[ path + sufix ].stats.isDirectory() ) ) )
+		return { stop: true };
+
+	return { stop: false, sufix };
 
 }
 
