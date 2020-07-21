@@ -258,7 +258,7 @@ const cache = async function ( pathname, run ) {
 
 	if ( stop ) {
 		
-		let spa_path = join( run.dir, ( run.base.endsWith( '/' ) ? run.base.slice( 0, -1 ) : run.base ) );
+		let spa_path = join( run.dir, ( run.base.endsWith( sep ) ? run.base.slice( 0, -1 ) : run.base ) );
 
 		if ( run.spa ) {
 			reverse( spa_path, run, pathname );
@@ -284,7 +284,7 @@ const serve = function ( config ) {
 		config = { dir: config };
 
 	const run = Object.assign({
-		base: 			'/',
+		base: 			sep,
 		dir: 			'.',
 		maxFileSize: 	1048576, // 1 MB
 		spa: 			false
