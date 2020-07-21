@@ -1,4 +1,4 @@
-import pulsa 		from './../src/index';
+import * as pulsa 	from './../src/index';
 import fs 			from 'fs';
 import http 		from 'http';
 import { resolve }	from 'path';

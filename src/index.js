@@ -304,4 +304,4 @@ const serve = function ( config ) {
 	}
 }
 
-export default { serve, memory, clear };
+export { serve, memory, clear };
