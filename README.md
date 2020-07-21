@@ -47,8 +47,8 @@ $ npm install @alumna/pulsa
 ## Usage
 
 ```js
-import http  from 'http';
-import pulsa from '@alumna/pulsa';
+import http       from 'http';
+import * as pulsa from '@alumna/pulsa';
 
 http.createServer( pulsa({
 

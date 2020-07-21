@@ -1,5 +1,11 @@
 # Alumna changelog
 
+## 1.0.5 - 2020-07-21
+
+* Named exports
+* Adding Coveralls as a fallback to Codecov
+* Updated devDependencies
+
 ## 1.0.4 - 2020-03-12
 
 * Code quality fixes
