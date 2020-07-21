@@ -3,3 +3,5 @@ pulsa.svg
 rollup/
 src/
 test/
+.travis.yml
+codecov.yml
