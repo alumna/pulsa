@@ -12,8 +12,8 @@
 	<a href="https://travis-ci.org/alumna/pulsa">
 		<img src="https://travis-ci.org/alumna/pulsa.svg?branch=master" alt="travis" />
 	</a>
-	<a href="https://codecov.io/gh/alumna/pulsa">
-		<img src="https://codecov.io/gh/alumna/pulsa/branch/master/graph/badge.svg" />
+	<a href='https://coveralls.io/github/alumna/pulsa?branch=master'>
+		<img src='https://coveralls.io/repos/github/alumna/pulsa/badge.svg?branch=master' alt='Coverage Status' />
 	</a>
 	<a href="https://npmjs.org/package/@alumna/pulsa">
 		<img src="https://badgen.now.sh/npm/dm/@alumna/pulsa" alt="downloads" />
