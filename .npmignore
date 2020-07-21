@@ -1,5 +1,7 @@
 coverage/
-pulsa.svg
 rollup/
 src/
 test/
+pulsa.svg
+.travis.yml
+codecov.yml
