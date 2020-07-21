@@ -84,8 +84,14 @@ const check_index = function ( path ) {
 
 const cache_stream = function ( path, run, buffer, ref ) {
 
-	if ( run && run.maxFileSize === 5 )
+	if ( run && run.maxFileSize === 5 ) {
 		console.log( ref.stats.size )
+		console.log( '' )
+		console.log( 'path: ' + path )
+		console.log( '' )
+		console.log( 'ref:')
+		console.log( ref)
+	}
 
 	if ( run && ref.stats.size > run.maxFileSize )
 		return ref.stream = ( res, opts ) => readStream( path, opts ).pipe( res );
@@ -258,7 +264,7 @@ const cache = async function ( pathname, run ) {
 
 	if ( stop ) {
 		
-		let spa_path = join( run.dir, ( run.base.endsWith( sep ) ? run.base.slice( 0, -1 ) : run.base ) );
+		let spa_path = join( run.dir, ( run.base.endsWith( '/' ) ? run.base.slice( 0, -1 ) : run.base ) );
 
 		if ( run.spa ) {
 			reverse( spa_path, run, pathname );
@@ -284,7 +290,7 @@ const serve = function ( config ) {
 		config = { dir: config };
 
 	const run = Object.assign({
-		base: 			sep,
+		base: 			'/',
 		dir: 			'.',
 		maxFileSize: 	1048576, // 1 MB
 		spa: 			false
