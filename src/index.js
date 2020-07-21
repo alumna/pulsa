@@ -84,16 +84,7 @@ const check_index = function ( path ) {
 
 const cache_stream = function ( path, run, buffer, ref ) {
 
-	if ( run && run.maxFileSize === 5 ) {
-		console.log( ref.stats.size )
-		console.log( '' )
-		console.log( 'path: ' + path )
-		console.log( '' )
-		console.log( 'ref:')
-		console.log( ref)
-	}
-
-	if ( run && ref.stats.size > run.maxFileSize )
+	if ( run && ref.stats.blksize > run.maxFileSize )
 		return ref.stream = ( res, opts ) => readStream( path, opts ).pipe( res );
 
 	ref.data = buffer || read( path );
