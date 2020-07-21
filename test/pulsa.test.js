@@ -213,6 +213,9 @@ describe('Pulsa Server tests', () => {
 
 	test('8. Testing maxFileSize', done => {
 
+		console.log( fs.statSync( './test/public_max/index.html' ).size )
+		// './test/public_max'
+
 		http.get( 'http://127.0.0.1:9003', response => {
 
 			expect( response.statusCode ).toBe( 200 );
