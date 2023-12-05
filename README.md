@@ -9,9 +9,6 @@
 	<a href="https://npmjs.org/package/@alumna/pulsa">
 		<img src="https://badgen.net/bundlephobia/min/@alumna/pulsa" alt="size" />
 	</a>
-	<a href="https://travis-ci.org/alumna/pulsa">
-		<img src="https://travis-ci.org/alumna/pulsa.svg?branch=master" alt="travis" />
-	</a>
 	<a href='https://coveralls.io/github/alumna/pulsa?branch=master'>
 		<img src='https://coveralls.io/repos/github/alumna/pulsa/badge.svg?branch=master' alt='Coverage Status' />
 	</a>
@@ -31,10 +28,10 @@
 * Works on any Express compatible framework, including [Polka](https://github.com/lukeed/polka)
 * 100% tested and working on Linux, Mac and Windows!
 
-Additionally, this module is delivered as:
+This module is delivered as ES Module:
 
-* **ES Module**: [`dist/pulsa.es.js`](https://unpkg.com/@alumna/pulsa/dist/pulsa.es.js)
-* **CommonJS**: [`dist/pulsa.cjs.js`](https://unpkg.com/@alumna/pulsa/dist/pulsa.cjs.js)
+* **ES Module**: [`dist/pulsa.js`](https://unpkg.com/@alumna/pulsa/dist/pulsa.js)
+
 
 
 ## Install
