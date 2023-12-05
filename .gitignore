@@ -6,3 +6,6 @@ node_modules/
 
 # macOS contributros
 .DS_Store
+
+# extra lock files
+pnpm-lock.yaml

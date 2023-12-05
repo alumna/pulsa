@@ -315,9 +315,9 @@ describe('Pulsa Server tests', () => {
 
 	});
 
-	test('12. Serving memory generated files', async done => {
+	test('12. Serving memory generated files', async () => {
 
-		const request = ( path = '', expected, end = false ) => {
+		const request = ( path = '', expected ) => {
 
 			return new Promise ( promise_resolve => {
 
@@ -330,19 +330,11 @@ describe('Pulsa Server tests', () => {
 					response.on( 'data', chunk => { data += chunk } )
 
 					response.on( 'end', () => {
-
 						expect( data ).toBe( expected );
-
 						promise_resolve();
-						
-						if ( end ) done();
-
 					})
-
 				})
-
 			})
-
 		}
 
 		pulsa.memory( './test/public_html/memory_buffer.txt', Buffer.from( 'This buffer only exists in memory!' ) )
@@ -352,11 +344,11 @@ describe('Pulsa Server tests', () => {
 		await request( '/memory_file.txt', 'This file only exists in memory!' )
 
 		pulsa.memory( './test/public_html/memory_file.txt', 'And we can update it!' )
-		request( '/memory_file.txt', 'And we can update it!', true )
+		return request( '/memory_file.txt', 'And we can update it!' )
 
 	});
 
-	test('13. Ensuring that "clear" really clears the cache', async done => {
+	test('13. Ensuring that "clear" really clears the cache', async () => {
 
 		const request = ( path = '', expected, end = false ) => {
 
@@ -371,19 +363,11 @@ describe('Pulsa Server tests', () => {
 					response.on( 'data', chunk => { data += chunk } )
 
 					response.on( 'end', () => {
-
 						expect( data ).toBe( expected );
-
 						promise_resolve();
-						
-						if ( end ) done();
-
 					})
-
 				})
-
 			})
-
 		}
 
 		// If this test failed previously, lets guarantee that
@@ -409,13 +393,13 @@ describe('Pulsa Server tests', () => {
 		fs.writeFileSync( 'test/public_changing/index.html', 'Unchanged index.' );
 		fs.writeFileSync( 'test/public_changing/other.html', 'Unchanged other HTML file.' );
 
-		done();
+		return true;
 
 	});
 
-	test('14. SPA working with on-memory indexes!', async done => {
+	test('14. SPA working with on-memory indexes!', async () => {
 
-		const request = ( path = '', expected, end = false ) => {
+		const request = ( path = '', expected ) => {
 
 			return new Promise ( promise_resolve => {
 
@@ -432,8 +416,6 @@ describe('Pulsa Server tests', () => {
 						expect( data ).toBe( expected );
 
 						promise_resolve();
-						
-						if ( end ) done();
 
 					})
 
@@ -451,13 +433,13 @@ describe('Pulsa Server tests', () => {
 		pulsa.memory( './test/public_spa_memory/index.html', 'This SPA is UPDATED from memory!' )
 
 		await request( '/', 'This SPA is UPDATED from memory!' )
-		request( '/inexistent/route', 'This SPA is UPDATED from memory!', true )
+		return request( '/inexistent/route', 'This SPA is UPDATED from memory!' )
 
 	});
 
-	test('15. Memory files overwriting 404 files', async done => {
+	test('15. Memory files overwriting 404 files', async () => {
 
-		const request = ( path = '', expected, non_existent = false, end = false ) => {
+		const request = ( path = '', expected, non_existent = false ) => {
 
 			return new Promise ( promise_resolve => {
 
@@ -466,44 +448,30 @@ describe('Pulsa Server tests', () => {
 					expect( response.statusCode ).toBe( non_existent ? 404 : 200 );
 
 					if ( non_existent ) {
-
 						promise_resolve();
-
-						if ( end ) done();
-
 					} else {
-
 						let data = '';
 
 						response.on( 'data', chunk => { data += chunk } )
 
 						response.on( 'end', () => {
-
 							expect( data ).toBe( expected );
-
 							promise_resolve();
-							
-							if ( end ) done();
-
 						})
-
 					}
-
 				})
-
 			})
-
 		}
 
 		await request( '/non_existen_to_be_overwrited.txt', null, true )
 
 		pulsa.memory( './test/public_html/non_existen_to_be_overwrited.txt', 'Now this non-existent file exists! No more 404s!' )
 
-		request( '/non_existen_to_be_overwrited.txt', 'Now this non-existent file exists! No more 404s!', false, true )
+		return request( '/non_existen_to_be_overwrited.txt', 'Now this non-existent file exists! No more 404s!', false, true )
 
 	});
 
-	test('16. Memory files overwriting 404 index-files', async done => {
+	test('16. Memory files overwriting 404 index-files', async () => {
 
 		const request = ( path = '', expected, non_existent = false, end = false ) => {
 
@@ -517,8 +485,6 @@ describe('Pulsa Server tests', () => {
 
 						promise_resolve();
 
-						if ( end ) done();
-
 					} else {
 
 						let data = '';
@@ -530,8 +496,6 @@ describe('Pulsa Server tests', () => {
 							expect( data ).toBe( expected );
 
 							promise_resolve();
-							
-							if ( end ) done();
 
 						})
 
@@ -550,11 +514,11 @@ describe('Pulsa Server tests', () => {
 		pulsa.memory( './test/public_memory/dir/index.html', 'Now this non-existent INDEX inside "dir" exists! No more 404s!' )
 
 		await request( '/', 'Now this non-existent INDEX exists! No more 404s!', false )
-		request( '/dir', 'Now this non-existent INDEX inside "dir" exists! No more 404s!', false, true )
+		return request( '/dir', 'Now this non-existent INDEX inside "dir" exists! No more 404s!', false )
 
 	});
 
-	test('17. Memory files overwriting existing files from disk', async done => {
+	test('17. Memory files overwriting existing files from disk', async () => {
 
 		const request = ( path = '', expected, end = false ) => {
 
@@ -573,8 +537,6 @@ describe('Pulsa Server tests', () => {
 						expect( data ).toBe( expected );
 
 						promise_resolve();
-						
-						if ( end ) done();
 
 					})
 
@@ -591,9 +553,7 @@ describe('Pulsa Server tests', () => {
 		pulsa.memory( './test/public_overwriting/other.html', 'Other overwrited, even existing. Nicely done!' )
 
 		await request( '/', 'Index overwrited, even existing. Nicely done!' )
-		await request( '/other.html', 'Other overwrited, even existing. Nicely done!' )
-
-		done();
+		return  request( '/other.html', 'Other overwrited, even existing. Nicely done!' )
 
 	});
 
